@@ -1,0 +1,44 @@
+services:
+
+  mysql:
+    image: mysql:9
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: todos
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  backend:
+    build:
+      context: .
+      target: backend-dev
+    ports:
+      - "3001:3000"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_DB: todos
+      MYSQL_USER: root
+      MYSQL_PASSWORD: secret
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+
+  frontend:
+    build:
+      context: .
+      target: frontend-dev
+    ports:
+      - "3000:5173"
+    depends_on:
+      - backend
+
+
+volumes:
+  mysql-data:
